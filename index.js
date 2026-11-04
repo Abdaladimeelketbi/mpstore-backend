@@ -6,6 +6,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// 👇 هذا السطر هو الذي كان مفقوداً، وهو مسؤول عن عرض ملفات الموقع (html/css)
+app.use(express.static('public')); 
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
@@ -50,7 +53,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'MP Store Backend is running and DB is ready!' });
 });
 
-// مسار جلب المنتجات (GET)
+// مسار جلب المنتجات
 app.get('/api/products', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM products');
@@ -60,7 +63,7 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-// 🔥 مسار إضافة منتج جديد (POST) - هذا هو ما كان مفقوداً
+// مسار إضافة منتج جديد
 app.post('/api/products', async (req, res) => {
   try {
     const { name, description, price, image_url } = req.body;
