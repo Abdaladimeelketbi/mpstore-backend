@@ -76,6 +76,19 @@ app.post('/api/products', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+// مسار حذف منتج (DELETE)
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('DELETE FROM products WHERE id = $1 RETURNING *', [id]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'المنتج غير موجود' });
+    }
+    res.json({ message: 'تم حذف المنتج بنجاح', deletedProduct: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
