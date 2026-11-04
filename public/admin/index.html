@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - MP Store DZ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style> body { font-family: system-ui, sans-serif; background-color: #f8fafc; } </style>
+</head>
+<body class="p-4 md:p-8">
+    
+    <div class="max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl font-black text-gray-800">لوحة تحكم المتجر</h1>
+            <a href="/" class="text-blue-600 hover:underline text-sm font-bold">العودة للموقع</a>
+        </div>
+
+        <!-- نموذج إضافة منتج -->
+        <div class="bg-white p-6 rounded-xl shadow-sm mb-8 border border-gray-100">
+            <h2 class="text-lg font-bold mb-4">إضافة منتج جديد</h2>
+            <form id="addProductForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" id="name" placeholder="اسم المنتج" required class="border p-2 rounded-lg">
+                <input type="number" id="price" placeholder="السعر (دج)" required class="border p-2 rounded-lg">
+                <input type="text" id="image_url" placeholder="رابط الصورة (URL)" class="border p-2 rounded-lg md:col-span-2">
+                <textarea id="description" placeholder="الوصف" class="border p-2 rounded-lg md:col-span-2"></textarea>
+                <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg md:col-span-2 hover:bg-blue-700">إضافة المنتج</button>
+            </form>
+        </div>
+
+        <!-- قائمة المنتجات الحالية -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <h2 class="text-lg font-bold mb-4">المنتجات الحالية</h2>
+            <div id="productsList" class="space-y-4">
+                <p class="text-gray-500">جاري التحميل...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api/products';
+
+        // جلب المنتجات
+        async function fetchProducts() {
+            const res = await fetch(API_URL);
+            const products = await res.json();
+            const list = document.getElementById('productsList');
+            
+            if (products.length === 0) {
+                list.innerHTML = '<p class="text-gray-500">لا توجد منتجات حالياً.</p>';
+                return;
+            }
+
+            list.innerHTML = products.map(product => `
+                <div class="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+                    <div class="flex items-center gap-3">
+                        <img src="${product.image_url || 'https://via.placeholder.com/50'}" class="w-12 h-12 object-cover rounded-md">
+                        <div>
+                            <h3 class="font-bold text-sm">${product.name}</h3>
+                            <p class="text-xs text-gray-500">${product.price} دج</p>
+                        </div>
+                    </div>
+                    <button onclick="deleteProduct(${product.id})" class="bg-red-100 text-red-600 px-3 py-1 rounded-md text-sm font-bold hover:bg-red-200">
+                        حذف
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // إضافة منتج
+        document.getElementById('addProductForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const product = {
+                name: document.getElementById('name').value,
+                price: document.getElementById('price').value,
+                image_url: document.getElementById('image_url').value,
+                description: document.getElementById('description').value
+            };
+
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(product)
+            });
+
+            e.target.reset();
+            fetchProducts(); // تحديث القائمة
+        });
+
+        // حذف منتج
+        async function deleteProduct(id) {
+            if (!confirm('هل أنت متأكد من حذف هذا المنتج؟')) return;
+            
+            await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+            fetchProducts(); // تحديث القائمة
+        }
+
+        // تشغيل عند التحميل
+        fetchProducts();
+    </script>
+</body>
+</html>
