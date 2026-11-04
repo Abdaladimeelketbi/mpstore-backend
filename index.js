@@ -43,12 +43,35 @@ async function setupDatabase() {
   }
 }
 
-// تشغيل إنشاء الجداول عند بدء السيرفر
 setupDatabase();
 
-// مسار تجريبي
+// مسار فحص السيرفر
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'MP Store Backend is running and DB is ready!' });
+});
+
+// مسار جلب المنتجات (GET)
+app.get('/api/products', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM products');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 🔥 مسار إضافة منتج جديد (POST) - هذا هو ما كان مفقوداً
+app.post('/api/products', async (req, res) => {
+  try {
+    const { name, description, price, image_url } = req.body;
+    const result = await pool.query(
+      'INSERT INTO products (name, description, price, image_url) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, description, price, image_url]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 const PORT = process.env.PORT || 3000;
