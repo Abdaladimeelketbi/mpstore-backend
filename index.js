@@ -1,32 +1,54 @@
 const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
-const path = require('path');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
 
-// الاتصال بقاعدة البيانات
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-// مسار تجريبي للتأكد من عمل السيرفر
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'MP Store Backend is running!' });
-});
-
-// مسار لجلب المنتجات (كمثال)
-app.get('/api/products', async (req, res) => {
+// دالة إنشاء الجداول تلقائياً
+async function setupDatabase() {
+  const sql = `
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'customer'
+    );
+    CREATE TABLE IF NOT EXISTS products (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT,
+      price NUMERIC(10,2) NOT NULL,
+      image_url TEXT
+    );
+    CREATE TABLE IF NOT EXISTS orders (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id),
+      product_id INTEGER REFERENCES products(id),
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `;
   try {
-    const result = await pool.query('SELECT * FROM products');
-    res.json(result.rows);
+    await pool.query(sql);
+    console.log("✅ Tables created successfully!");
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("❌ Error creating tables:", err);
   }
+}
+
+// تشغيل إنشاء الجداول عند بدء السيرفر
+setupDatabase();
+
+// مسار تجريبي
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', message: 'MP Store Backend is running and DB is ready!' });
 });
 
 const PORT = process.env.PORT || 3000;
