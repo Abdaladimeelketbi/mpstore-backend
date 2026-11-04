@@ -74,4 +74,48 @@
         );
         els.forEach(function (el) { io.observe(el); });
       })();
-    </script><script src="_astro/Layout.astro_astro_type_script_index_0_lang.DCdsjAWG.js" type="module"></script></body></html>
+    </script><script src="_astro/Layout.astro_astro_type_script_index_0_lang.DCdsjAWG.js" type="module"></script><script>
+    // دالة جلب المنتجات من السيرفر
+    async function loadDynamicProducts() {
+        try {
+            // الاتصال بالسيرفر (لأن الملف سيُعرض من نفس السيرفر، لا نحتاج لكتابة الرابط كاملاً)
+            const response = await fetch('/api/products');
+            const products = await response.json();
+
+            // البحث عن الحاوية التي تعرض المنتجات المميزة
+            const container = document.getElementById('slider-vuy94l');
+            if (!container) return;
+
+            // إذا كانت قاعدة البيانات فارغة، لا نفعل شيئاً (أو نعرض رسالة)
+            if (products.length === 0) {
+                container.innerHTML = '<p class="text-sm p-4 opacity-60">لا توجد منتجات حالياً.. قم بإضافتها من لوحة التحكم.</p>';
+                return;
+            }
+
+            // مسح المنتجات الثابتة القديمة
+            container.innerHTML = '';
+
+            // إضافة المنتجات الجديدة من قاعدة البيانات بتصميم Tailwind الخاص بك
+            products.forEach(product => {
+                const cardHTML = `
+                    <a class="glass-card reveal group flex flex-col overflow-hidden p-2 transition-transform hover:-translate-y-1 w-36 shrink-0 snap-start sm:w-44" href="#">
+                        <div class="relative aspect-square overflow-hidden rounded-xl bg-black/5">
+                            <img alt="${product.name}" class="h-full w-full object-cover transition-transform duration-300" 
+                                 src="${product.image_url || 'https://via.placeholder.com/220?text=No+Image'}" />
+                        </div>
+                        <div class="px-1 pt-2 pb-1">
+                            <h3 class="line-clamp-2 text-xs font-bold leading-snug">${product.name}</h3>
+                            <p class="text-brand-500 font-black text-sm mt-1">${product.price} دج</p>
+                        </div>
+                    </a>
+                `;
+                container.insertAdjacentHTML('beforeend', cardHTML);
+            });
+        } catch (error) {
+            console.error("خطأ في جلب المنتجات:", error);
+        }
+    }
+
+    // تشغيل الدالة عند تحميل الصفحة
+    document.addEventListener('DOMContentLoaded', loadDynamicProducts);
+                 </script></body></html>
